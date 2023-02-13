@@ -1,0 +1,29 @@
+[package]
+name = "lzos"
+version = "0.1.0"
+edition = "2021"
+authors = ["Lzebulon <lzebulon@outlook.fr>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bootloader = { version = "0.9.23", features = ["map_physical_memory"]}
+spin = "0.5.2"
+x86_64 = "0.14.2"
+pic8259 = "0.10.1"
+pc-keyboard = "0.5.0"
+linked_list_allocator = "0.9.0"
+
+
+[dependencies.lazy_static]
+version = "1.0"
+features = ["spin_no_std"]
+
+[dependencies.crossbeam-queue]
+version = "0.2.1"
+default-features = false
+features = ["alloc"]
+
+[dependencies.conquer-once]
+version = "0.2.0"
+default-features = false
