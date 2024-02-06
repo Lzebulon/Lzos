@@ -1,0 +1,17 @@
+[build]
+target = "x86_64-lzos.json"
+
+[target.'cfg(target_os = "linux")']
+rustflags = ["-C", "link-arg=-nostartfiles"]
+
+[target.'cfg(target_os = "none")']
+runner = "echo"
+
+[unstable]
+build-std-features = ["compiler-builtins-mem"]
+build-std = ["core", "compiler_builtins", "alloc"]
+
+# https://github.com/sgmarz/osblog/blob/master/risc_v/.cargo/config
+[target.riscv64gc-unknown-none-elf]
+linker = "riscv64-unknown-linux-gnu-gcc"
+runner = "qemu-system-riscv64 -machine virt -cpu rv64 -smp 4 -m 128M -drive if=none,format=raw,file=hdd.dsk,id=foo -device virtio-blk-device,scsi=off,drive=foo -nographic -serial mon:stdio -bios none -device virtio-rng-device -device virtio-gpu-device -device virtio-net-device -device virtio-tablet-device -device virtio-keyboard-device -kernel "
