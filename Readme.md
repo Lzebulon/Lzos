@@ -4,7 +4,7 @@
 # TODO
 
 - [X] boot on x86 mode 32bits
-- [ ] switch to 64bits mode
+- [X] switch to 64bits mode
 - [ ] support RISC-V
 - [ ] file system
 - [ ] run program
