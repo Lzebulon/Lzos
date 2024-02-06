@@ -9,6 +9,8 @@
 - [ ] file system
 - [ ] run program
 
+- [ ] POSIX compliant
+
 # Links
 
 - [OSDev](https://wiki.osdev.org)
