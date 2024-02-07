@@ -17,4 +17,5 @@
 - [Blog OS : Writing an OS in Rust](https://os.phil-opp.com)
 - [The Adventure of OS](https://osblog.stephenmarz.com/)
 
+- [Video : Building an OS](https://youtube.com/playlist?list=PLFjM7v6KGMpiH2G-kT781ByCNC_0pKpPN&si=71T-M-krMOl401oj)
 - [Video : Writing an operating system](https://youtube.com/playlist?list=PL980gcR1LE3LBuWuSv2CL28HsfnpC4Qf7&si=oyQRNQT4g8ei7Biu)
