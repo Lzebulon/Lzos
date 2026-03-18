@@ -1,8 +1,13 @@
-use core::{alloc::GlobalAlloc, cell::UnsafeCell, ptr::null_mut, sync::atomic::AtomicUsize};
+//! We define here the global allocator use by rust.
+//! This global allocator is important to be able to use
+//! data structure like Vec.
+
+use core::{alloc::GlobalAlloc, cell::UnsafeCell, panic, ptr::null_mut, sync::atomic::AtomicUsize};
 
 use crate::printkln;
 
-const ARENA_SIZE: usize = 128 * 1024;
+/// Size of your kernel heap
+const ARENA_SIZE: usize = 64 * 1024 * 1024;
 const MAX_SUPPORTED_ALIGN: usize = 4096;
 
 const ALLOC_ABORT: bool = false;
@@ -64,5 +69,35 @@ unsafe impl GlobalAlloc for SimpleAllocator {
 
     unsafe fn dealloc(&self, _ptr: *mut u8, _layout: core::alloc::Layout) {
         printkln!("Pourquoi dealloc ????");
+    }
+}
+
+struct AllocCell {
+    free: bool,
+    start: *mut usize,
+    size: *mut usize,
+    arena: [u8],
+}
+
+struct ArrayAllocator {
+    arena: UnsafeCell<[u8; ARENA_SIZE]>,
+    remaining: AtomicUsize,
+}
+
+unsafe impl Sync for ArrayAllocator {}
+
+unsafe impl GlobalAlloc for ArrayAllocator {
+    unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
+        let size = layout.size();
+        let align = layout.align();
+
+        if self.remaining.load(core::sync::atomic::Ordering::SeqCst) < size {
+            return null_mut();
+        }
+        null_mut()
+    }
+
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: core::alloc::Layout) {
+        todo!()
     }
 }

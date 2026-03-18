@@ -1,65 +1,65 @@
 use core::arch::asm;
 
-#[repr(C)]
-struct GateDescriptor {
-    offset_low: u16,
-    segment_selector: u16,
-    ist: u8,
-    /// reserved + 2 bit ist
-    attributes: u8,
-    /// p (1) + dpl (2) + 0 + gate type (4)
-    offset_middle: u16,
-    offset_hight: u32,
-    reserved: u32,
-}
+use crate::{arch::riscv::sbi::time_extension::sbi_set_timer, printkln};
 
-#[repr(u8)]
-enum TypeDescriptor {
-    InterruptGate = 0b1000_1110,
-    TrapGate = 0b1000_1111,
-}
-
-#[derive(Default)]
-#[repr(C)]
-struct InterruptsDescriptorTable {
-    division_error: usize,
-    debug: usize,
-    non_maskable_interrupt: usize,
-    breakpoint: usize,
-    overflow: usize,
-    bound_range_exceeded: usize,
-    invalid_opcode: usize,
-    device_not_available: usize,
-    double_fault: usize,
-    _coprocessor_segment_overrun: usize,
-    invalid_tss: usize,
-    segment_not_present: usize,
-    stack_segment_fault: usize,
-    general_protection_fault: usize,
-    page_fault: usize,
-    reserved: usize,
-    x87_floating_point_exception: usize,
-    alignment_check: usize,
-    machine_check: usize,
-    simd_floating_point_exception: usize,
-    virtualization_exception: usize,
-    control_protection_exception: usize,
-    vmm_communication_exception: usize,
-    security_exception: usize,
-    triple_fault: usize,
-    _fpu_error_interrupt: usize,
-}
-
-impl InterruptsDescriptorTable {
-    fn new() -> Self {
-        Self::default()
-    }
-
-    fn load(&self) {
-        unsafe { asm!("lidt ({})", in(reg) self, options(readonly, nostack, preserves_flags)) }
+/// setup s mode interrupt in direct mode
+///
+/// The `interrupt_handler` in parameter **MUST** use
+/// `extern "riscv-interrupt-s"` to be sure that `sret` (or equivalent)
+/// instruction is use in return instruction. Without this the
+/// interrupt handler will not work.
+pub fn setup_s_mode_interrupt_direct(interrupt_handler: extern "riscv-interrupt-s" fn()) {
+    unsafe {
+        asm!(
+            "csrw stvec, {f}",
+            "csrsi sstatus, 2",
+            f = in(reg) interrupt_handler
+        )
     }
 }
 
-pub fn init_idt() {
-    let mut idt = InterruptsDescriptorTable::new();
+pub fn enable_s_mode_interrupt(code: usize) {
+    unsafe {
+        asm!(
+            "csrs sie, {c}",
+            c = in(reg) code
+        )
+    }
+}
+
+pub fn clear_pending_bit(code: usize) {
+    unsafe {
+        asm!(
+            "csrc sip, {c}",
+            c = in(reg) code
+        )
+    }
+}
+
+/// return time store in rdtime
+pub fn get_time() -> u64 {
+    let r;
+    unsafe {
+        asm!(
+            "rdtime {ret}",
+            ret = out(reg) r
+        )
+    };
+    r
+}
+
+pub fn set_timer_later() {
+    let t = get_time();
+
+    if let Err(err) = sbi_set_timer(t + 10_000_000) {
+        printkln!("error with set_timer_later : {err:?}");
+    };
+}
+
+// NOTE: this function didn't use `ret` instruction to return
+// but use `sret`
+pub extern "riscv-interrupt-s" fn s_mode_direct_interrupt_handler() {
+    clear_pending_bit(1 << 5);
+    set_timer_later();
+    printkln!("It's TIME !!");
 }

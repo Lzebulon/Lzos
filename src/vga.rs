@@ -145,7 +145,10 @@ impl VGAOut {
         inner.vga = Some(Writer {
             column_position: 0,
             color_code: ColorCode::new(Color::Red, Color::White),
+            #[cfg(target_arch = "x86_64")]
             buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
+            #[cfg(target_arch = "riscv64")]
+            buffer: unsafe { &mut *(0x10000000 as *mut Buffer) },
         });
     }
 
@@ -157,25 +160,3 @@ impl VGAOut {
 unsafe impl Sync for VGAOut {}
 
 static VGA_OUT: VGAOut = VGAOut::new();
-
-pub fn _printk(args: fmt::Arguments) {
-    let mut vga_inner = VGA_OUT.borrow_mut();
-    if let Some(vga) = &mut vga_inner.vga {
-        vga.write_fmt(args).unwrap();
-    }
-}
-
-/// Prints on vga buffer.
-#[macro_export]
-macro_rules! printk {
-    ($($arg:tt)*) => {
-        ($crate::vga::_printk(format_args!($($arg)*)));
-    };
-}
-
-/// Prints on vga buffer, with a newline.
-#[macro_export]
-macro_rules! printkln {
-    () => ($crate::printk!("\n"));
-    ($($arg:tt)*) => ($crate::printk!("{}\n", format_args!($($arg)*)));
-}
